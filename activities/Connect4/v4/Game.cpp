@@ -184,14 +184,21 @@ void Game::CheckGrid(int col) {
     int indexOne, indexTwo;
 
     /* Vérification horizontale */
-    int _col = col - 3;
+    int _col; // col - 3
     // Clipping
-    if (_col < 0) _col = 0;
+    if (col < 3) {
+        _col = 0;
+    }
+    else {
+        _col = col - 3;
+    }
+     
     // Loop pour obtenir la première valeur de score
     for (int i = 0; i < 4; i++) {
         indexOne = grid[row][_col++];
         score = score * valeurSymbole[indexOne];
     }
+    
     // Vérifie si le jouer a gagné
     if (score == valeurGagnante[quiJoue]) {
         gameWon = true;

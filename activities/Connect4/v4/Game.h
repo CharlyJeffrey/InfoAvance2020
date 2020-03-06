@@ -52,6 +52,6 @@ class Game {
         int * score;    // Score des joueurs
         
         string symboles = "XO ";            // Symboles possibles
-        int valeurSymbole[3] = {2, 3, 0};   // Valeur associée à chaque symbole
+        int valeurSymbole[3] = {2, 3, 5};   // Valeur associée à chaque symbole
         int * valeurGagnante;
 };

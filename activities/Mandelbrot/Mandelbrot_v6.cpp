@@ -1,5 +1,5 @@
 /* 
-Sizieme itération du code:
+Sixieme itération du code:
 */
 
 #include <math.h>
@@ -10,7 +10,7 @@ Sizieme itération du code:
 #include <iostream>
 #include <string>
 
-// Math constantes
+// Constante Mathématique
 #define _USE_MATH_DEFINES
 
 // Resolution:
@@ -20,6 +20,7 @@ Sizieme itération du code:
 #define DEPTH 3
 #define WIDTH 3840
 #define HEIGHT 2160
+// Aspect ratio
 #define RATIO ((1.0*WIDTH)/HEIGHT)
 // Valeur de normalisation pixel
 #define NORMALIZATION_VALUE 255
@@ -28,6 +29,8 @@ Sizieme itération du code:
 #define MAX_ITER 2048
 #define MAX_NORM 4.0
 #define ZOOM 2048.0
+
+
 using namespace std;
 
 /* Structures pour différents encodages d'un pixel */
@@ -206,7 +209,7 @@ int *** AllocateMemory3D(int depth, int size, int length) {
 // Fonction pour initialiser un array 2D
 void Initialize2DArray(int ** arr, int width, int height) {
     // Boucle pour remplir le array
-    for (int i = 0; i < height; i++) for (int j = 0; j < width; j++) arr[i][j] = (i*i+j*j)%NORMALIZATION_VALUE;
+    for (int i = 0; i < height; i++) for (int j = 0; j < width; j++) arr[i][j] = 0; //(i*i+j*j)%NORMALIZATION_VALUE;
 }
 
 // Fonction pour initialiser un array 3D
