@@ -8,5 +8,5 @@
 * Fractals
 
 ## Activités
-* Tic-Tac-Toe
+* Connect4
 * Mandelbrot Fractal
