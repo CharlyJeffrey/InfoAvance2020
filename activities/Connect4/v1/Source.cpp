@@ -1,6 +1,6 @@
-#include <stdlib.h>
 #include "Game.cpp"
 
+/* MACRO ( optionnelles ), sinon hard-coded */
 #define ROWS 6
 #define COLS 7
 

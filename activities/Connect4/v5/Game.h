@@ -20,7 +20,8 @@ enum EChoiceStatus {
 class Game {
     public:
         Game(int, int);     // Constructeur
-    
+        ~Game();            // Destructeur
+
         bool IsGameOver();              // Partie terminée
 
         void Reset();                   // Reinitialise pour une nouvelle partie

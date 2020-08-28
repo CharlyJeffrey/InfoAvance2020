@@ -1,9 +1,6 @@
 /* 
-Cinquieme itération du code:
-    * Utilisation des structures HSV/RGB
-    * Modifier la valeur retournée par Mandelbrot par 'iter'
-    * Définition d'une fonction pour modifier la valeur retournée par Mandelbrot
-    * Ajouter une fonction pour enregistrer l'image en greyscale
+Extra:
+    * Mandelbrot en utilisant un produit scalaire
 */
 
 #include <stdio.h>  
@@ -12,7 +9,6 @@ Cinquieme itération du code:
 #include <iostream>
 #include <string>
 
-// À INCLURE
 #include "Outils.cpp"
 
 
@@ -23,63 +19,79 @@ Cinquieme itération du code:
 #define DEPTH 3
 #define WIDTH 3840
 #define HEIGHT 2160
+// Aspect ratio
 #define RATIO ((1.0*WIDTH)/HEIGHT)
 // Valeur de normalisation pixel
 #define NORMALIZATION_VALUE 255
 
 // Mandelbrot variables
-#define MAX_ITER 256
+#define MAX_ITER 1024
 #define MAX_NORM 4.0
+#define ZOOM 1024.0
+
+// MISC
+#define W 0.1
 
 using namespace std;
 
+
 /* Fonction pour la récursion de Mandelbrot */
 int Mandelbrot(double, double);
+bool MandelbrotDotProduct(double, double, double*);
 
 /* Fonction pour modifier la valeur obtenue par Mandelbrot */
-double Normalize(int);
+double ScalingFunction(double);
+
+/* Fonction pour faire un dot-product normalisé */
+double NormalizedDotProduct(double, double, double, double);
 
 /* Fonctions pour allouer de la mémoire */
 int**  AllocateMemory(int, int);
 int*** AllocateMemory(int, int, int);
+
+/* Fonctions pour libérer la mémoire */
+void FreeMemory(int**, int);
+void FreeMemory(int***, int, int);
 
 /* Fonction pour sauvegarder un array en image */
 void SaveArrayAsImage(int**, int, int, string);
 void SaveArrayAsImage(int***, int, int, int, string);
 void SaveArrayAsGreyImage(int***, int, int, int, string);
 
+/* Fonction pour passer de l'encodage 'HSV' à 'RGB' */
+void HSVtoRGB(HSV*, RGB*);
+
 int main() {
     // Nom de l'image
-    string file_name = "Images/image_5.ppm";
-    string file_name_GS = "Images/image_5_gs.ppm";
+    string file_name = "Images/image_dot.ppm";
+    string file_name_GS = "Images/image_dot_gs.ppm";
 
     // Centre de l'image
-    double centre_x = -0.75;
-    double centre_y = 0.0;
+    double centre_x = -1.245; //-0.748;
+    double centre_y =  0.093; // 0.094;
     // Zoom
-    double zoom = 1.0;
+    double zoom = ZOOM;
     // Range et Aspect ratio
     double range_x = 2.0 / zoom;
     double range_y = range_x / RATIO;
-
     // Position (x,y) dans le domaine
     double x, y;
     // Variable pour stocker la valeur de Mandelbrot
-    int val;
+    double dot;
 
     // Structures pour stocker la couleur d'un pixel
     RGB pixelRGB;
     HSV pixelHSV;
 
     // Initialise la couleur
-    pixelHSV.s = 1.0;
     pixelHSV.v = 1.0;
+    pixelHSV.s = 1.0;
 
     // Initialise le array
     int *** array;
     // Alloue de la mémoire
     array = AllocateMemory(DEPTH, HEIGHT, WIDTH);
-    
+
     // Boucle sur les rangés
     for (int i = 0; i < HEIGHT; i++) {
         // Obtient la position réelle à partir du pixel
@@ -88,23 +100,15 @@ int main() {
         for (int j = 0; j < WIDTH; j++) {
             // Obtient la position réelle à partir du pixel
             x = centre_x + (((2.0 * j)/WIDTH) - 1.0) * range_x;
-            // Obtient la valeur associée au nombre 'C = x + iy'
-            val = Mandelbrot(x, y);
             // Colorie le pixel selon la valeur obtenue
-            if (val != 0) {
-                // Obtient la valeur entre 0.0 et 1.0
-                pixelHSV.h = 360.0 * Normalize(val);
+            if (MandelbrotDotProduct(x, y, &dot)) {
+                pixelHSV.h = 360.0 * NormalizedSinus(dot, W);
                 // Obtient les valeurs RGB
                 HSVtoRGB(&pixelHSV, &pixelRGB);
                 // Colorie le pixel
                 array[0][i][j] = pixelRGB.r;
                 array[1][i][j] = pixelRGB.g;
                 array[2][i][j] = pixelRGB.b;
-            } else {
-                // Colorie le pixel en noir
-                array[0][i][j] = 0;
-                array[1][i][j] = 0;
-                array[2][i][j] = 0;
             }
         }
     }
@@ -112,43 +116,42 @@ int main() {
     SaveArrayAsImage(array, DEPTH, WIDTH, HEIGHT, file_name);
     SaveArrayAsGreyImage(array, DEPTH, WIDTH, HEIGHT, file_name_GS);
 
+    // Libère mémoire
+    FreeMemory(array, DEPTH, HEIGHT);
+    
     // FIN
     return 0;
 }
 
-// Fonction de Mandelbrot
-int Mandelbrot(double x, double y) {
-    // Nombre complexe 'C'
+bool MandelbrotDotProduct(double x, double y, double * dot) {
+    // Nombre complex C
     double c_re = x;
     double c_im = y;
-    // Valeur initiale du nombre complexe 'Z'
+    // Valeur initiale du nombre complexe Z
     double z_re = 0.0;
     double z_im = 0.0;
-    // Variables 'tampons'
+    // Variable tampons
     double re = 0.0;
     double im = 0.0;
     // Boucle
-    int iter = 1;
+    int iter = 0;
     while (iter < MAX_ITER) {
         // Nouvelle valeur réelle/imaginaire
         re = z_re*z_re - z_im*z_im + c_re;
         im = 2*z_re*z_im + c_im;
         // Condition sur la norme
-        if (re*re + im*im >= MAX_NORM) return iter;
+        if (re*re + im*im >= MAX_NORM) {
+            *dot = NormalizedDotProduct(z_re, z_im, c_re, c_im);
+            return true;
+        }
         // Met à jour le nombre 'Z'
         z_re = re;
         z_im = im;
         // Augmente la variable itérative
         iter++;
     }
-    return 0;
+    return false;
 }
-
-// Fonction pour normaliser la valeur
-double Normalize(int val) {
-    return sqrt( (1.0 * val) / MAX_ITER );
-}
-
 
 // Fonction pour allouer de la mémoire pour un array 2D
 int** AllocateMemory(int w, int h) {
@@ -166,16 +169,22 @@ int*** AllocateMemory(int d, int w, int h) {
     int *** arr = (int***) malloc(d * sizeof(int**));
     for (int k = 0; k < d; k++) 
         arr[k] = AllocateMemory(w, h);
-    
     return arr;
 }
 
-void FunkyFunction(int ** array, int w, int h) {
-    for (unsigned int i = 0; i < w; i++) 
-        for (int j = 0; j < h; j++) 
-            array[i][j] = (i*i + j*j) % NORMALIZATION_VALUE;
+// Fonction pour libérer la mémoire d'un array 2d
+void FreeMemory(int** arr, int w) {
+    for (unsigned int i = 0; i < w; i++)
+        free(arr[i]);
+    free(arr);
 }
 
+// Fonction pour libérer la mémoire d'un array 3d
+void FreeMemory(int*** arr, int d, int w) {
+    for (unsigned int i = 0; i < d; i++)
+        FreeMemory(arr[i], w);
+    free(arr);
+}
 
 // Fonction pour sauvegarder le array en image (B&W)
 void SaveArrayAsImage(int ** arr, int width, int height, string file_name) {
@@ -202,9 +211,11 @@ void SaveArrayAsImage(int *** arr, int depth, int width, int height, string file
     image << NORMALIZATION_VALUE << endl;
     // Écrit les valeurs de chaque pixel (R G B)
     for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++)
-            for (int d = 0; d < depth; d++)     
+        for (int j = 0; j < width; j++) {
+            for (int d = 0; d < depth; d++) {
                 image << arr[d][i][j] << " ";
+            }
+        }
         image << endl;
     }
 }
@@ -225,7 +236,6 @@ void SaveArrayAsGreyImage(int *** arr, int depth, int width, int height, string 
             for (int d = 0; d < depth; d++) grey = grey + arr[d][i][j];
             grey = grey / depth;
             image << grey  << " ";
-            grey = 0;
         }
         image << endl;
     }

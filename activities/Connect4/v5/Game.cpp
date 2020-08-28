@@ -7,16 +7,17 @@ Game::Game(int _rows, int _cols) {
     cols = _cols;
     // Limite pour jeu fonctionnel
     if (rows < 4) rows = 4;
-    if (cols < 4) cols = 4;
+    if (cols < 4) cols = 4; 
 
     // Nombre de coups maximum
-    maxCoups = _rows * _cols;
+    maxCoups = rows * cols;
 
     // Initialise la grille de jeu
     grid = new int*[_rows];
     for (int i = 0; i < rows; i++) {
         grid[i] = new int[_cols];
-    } 
+        for (int j = 0; j < cols; j++) grid[i][j] = 2;
+    }
 
     // Nom des joueurs
     joueurs = new char*[NOMBRE_JOUEURS];
@@ -33,11 +34,24 @@ Game::Game(int _rows, int _cols) {
     Reset();
 }
 
+// Destructeur de l'objet
+Game::~Game() {
+    // Le destructeur doit libéré la mémoire ( non-récupérée )
+    for (int i = 0; i < rows; i++) 
+        delete[] grid[i];
+    delete[] grid;
+    delete[] colsCounter;
+    for (int i = 0; i < NOMBRE_JOUEURS; i++) 
+        delete[] joueurs[i];
+    delete[] joueurs;
+}
+
 // Méthode pour réinitialiser une instance de jeu
 void Game::Reset() {
+    // Initialise les attibuts lié à la partie
     gameOver = false;
     gameWon = false;
-    quiJoue = false;
+    quiJoue = true;
     coups = 0;
 
     // Initialise la grille de jeu
@@ -48,16 +62,23 @@ void Game::Reset() {
     for (int i = 0; i < cols; i++) colsCounter[i] = 0;
 }
 
-// Méthode pour déterminer si une colonne est pleine
-bool Game::IsColumnFull(int col) {return colsCounter[col] < rows;}
+// Méthode pour jouer une série de partie
+void Game::PlaySetOf(unsigned int nombreParties) {
+    // Boucle sur le nombre de partie qui seront jouées
+    for (int p = 0; p < nombreParties; p++) {
+        // Joue une partie
+        PlayGame();
+        // Reset
+        Reset();
+    }
+    // Affiche score final
+    cout << score[0] << " " << score[1] << endl;
+}
 
-// Méthode pour changer le joueur qui joue
-void Game::ChangeJoueur() {quiJoue = !quiJoue;}
- 
+// Méthode pour jouer une partie
 void Game::PlayGame() {
     // Variable pour contenir le choix du joueur
     int choix;
-
 
     // Affiche la grille
     PrintGrid();
@@ -73,11 +94,20 @@ void Game::PlayGame() {
         // Affiche la grille
         PrintGrid();
     }
+
+    // Affiche résultat
+    PrintGameResults();
 }
+
+// Méthode pour déterminer si une colonne est pleine
+bool Game::IsColumnFull(int col) {return colsCounter[col] < rows;}
+
+// Méthode pour déterminer si la partie est terminée
+bool Game::IsGameOver() {return gameWon || gameOver;}
 
 // Méthode pour obtenir le status d'un choix
 EChoiceStatus Game::GetChoiceStatus(int choix) {
-    // Vérifie si le choix fait n'est pas un nombre
+    // Vérifie si le choix fait n'est pas un nombre entier
     if (!cin.good()) {
         cin.clear();
         cin.ignore(64, '\n');
@@ -115,15 +145,15 @@ void Game::GetValidChoice(int * pchoix) {
     }
 }
 
-
 // Méthode pour placer un jeton dans une colonne spécifiée
 void Game::PlaceJetonThenCheck(int col) {
     // Ajoute le jeton du joueur dans la colonne 'col'
     grid[colsCounter[col]++][col] = quiJoue;
-    // Vérifie si coup gagnant
+    // Vérifie la grille de jeu
     CheckGrid(col);
     // Coup joué + vérification
-    if (!gameOver && ++coups >= maxCoups) gameOver = true;
+    coups++;
+    gameOver = (gameWon || coups==maxCoups);
 };
 
 // Méthode pour déterminer si un joueur à gagné
@@ -156,7 +186,7 @@ void Game::CheckGrid(int col) {
     
     // Vérifie si le jouer a gagné
     if (scoreCoup[quiJoue] == 4) {
-        gameWon = gameOver = true;
+        gameWon = true;
         return;
     }
 
@@ -169,7 +199,7 @@ void Game::CheckGrid(int col) {
         scoreCoup[indexTwo]++;
         // Vérifie si le joueur a gagné
         if (scoreCoup[quiJoue] == 4) {
-            gameWon = gameOver = true;
+            gameWon = true;
             return;
         }
     }
@@ -189,7 +219,7 @@ void Game::CheckGrid(int col) {
         }
         // Vérifie si le joueur a gagné
         if (scoreCoup[quiJoue] == 4) {
-            gameWon = gameOver = true;
+            gameWon = true;
             return;
         }
         // Reset du score associé au coup joué
@@ -212,7 +242,7 @@ void Game::CheckGrid(int col) {
     }
     // Vérifie si le joueur a gagné
     if (scoreCoup[quiJoue] == 4) {
-        gameWon = gameOver = true;
+        gameWon = true;
         return;
     }
     // Boucle sur le reste de la diagonale
@@ -224,7 +254,7 @@ void Game::CheckGrid(int col) {
         scoreCoup[indexTwo]++;
         // Vérifie si score gangnant
         if (scoreCoup[quiJoue] == 4) {
-            gameWon = gameOver = true;
+            gameWon = true;
             return;
         }
     }
@@ -251,7 +281,7 @@ void Game::CheckGrid(int col) {
     
     // Vérifie si score gangnant
     if (scoreCoup[quiJoue] == 4) {
-        gameWon = gameOver = true;
+        gameWon = true;
         return;
     }
     
@@ -264,7 +294,7 @@ void Game::CheckGrid(int col) {
         scoreCoup[indexTwo]++;
         // Vérifie si score gangnant
         if (scoreCoup[quiJoue] == 4) {
-            gameWon = gameOver = true;
+            gameWon = true;
             return;
         }
     }
@@ -287,4 +317,20 @@ void Game::PrintGrid() {
     for (int i = 0 ; i < cols; i++) cout << "----"; cout << endl;
     for (int i = 0; i < cols; i++) cout << "  " << i << " "; cout << endl;
     for (int i = 0 ; i < cols; i++) cout << "===="; cout << "\n\n";
+}
+
+// Méthode pour afficher les résultats d'une partie
+void Game::PrintGameResults() {
+    // Détermine un joueur a gagné
+    if (gameWon) {
+        // Félicite le joueur
+        cout << "Félicitation " << joueurs[quiJoue] << ", vous avez gagné la partie!\n\n";
+        // Update score
+        score[quiJoue]++;
+    } else {
+        // Sinon, partie nulle
+        cout << "Partie nulle!\n\n";
+    }
+    // Affiche le score 
+    cout << "C'est maintenant " << score[0] << " à " << score[1] << "!\n\n";
 }

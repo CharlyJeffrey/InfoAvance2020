@@ -1,6 +1,6 @@
 /* 
 Première itération du code:
-    * Créer un array de dimension (WIDTH, HEIGHT)
+    * Créer un array de dimension (HEIGHT, WIDTH)
     * Créer une image B&W à partir du array
     * Sauvegarder l'image
 */
@@ -31,21 +31,12 @@ int main() {
     /* Crée le array */
     // Initialise le array
     int ** array;
-    // Alloue de la mémoire
-    array = (int**) malloc(HEIGHT * sizeof(int*));
-    // Boucle pour intialise le array
-    for (int i = 0; i < WIDTH; i++) {
-        // Alloue de la mémoire pour chaque rangé
-        array[i] = (int*) malloc(WIDTH * sizeof(int));
-    }
-
-    // Vérifie si l'allocation mémoire
-    if (array != nullptr) {
-        // Initialise les cases à 
-        for (int i = 0; i < HEIGHT; i++) for (int j = 0; j < WIDTH; j++) array[i][j] = (i*i + j*j) % NORMALIZATION_VALUE;
-    } else {
-        printf("Allocation mémoire échouée.");
-        return 0;
+    // Remplie le array
+    array = new int*[HEIGHT];
+    for (int i = 0; i < HEIGHT; i++) {
+        array[i] = new int[WIDTH];
+        for (int j = 0; j < WIDTH; j++)
+            array[i][j] = (i*i + j*j) % NORMALIZATION_VALUE;
     }
 
     /* Crée l'image */
@@ -60,6 +51,11 @@ int main() {
         for (int j = 0; j < WIDTH; j++) image << array[i][j] << " ";
         image << endl;
     }
+
+    // Libère mémoire
+    for (int i = 0; i < HEIGHT; i++) 
+        free(array[i]);
+    free(array);
 
     // FIN
     return 0;

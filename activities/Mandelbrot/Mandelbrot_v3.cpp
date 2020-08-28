@@ -31,11 +31,10 @@ using namespace std;
 int Mandelbrot(double, double);
 
 /* Fonctions pour allouer de la mémoire */
-int * AllocateMemory1D(int);
-int** AllocateMemory2D(int, int);
+int** AllocateMemory(int, int);
 
 /* Fonction pour initialiser un array 2D */
-void Initialize2DArray(int**, int, int);
+void FunkyFunction(int**, int, int);
 
 /* Fonction pour sauvegarder un array en image */
 void SaveArrayAsImage(int**, int, int, string);
@@ -50,38 +49,37 @@ int main() {
     // Zoom
     double zoom = 1.0;
     // Range et Aspect ratio
-    double range_x = 2.0 / zoom;
-    double range_y = range_x / RATIO;
+    double radius_x = 2.0 / zoom;
+    double radius_y = radius_x / RATIO;
+    
     // Position (x,y) dans le domaine
     double x, y;
 
-    // Initialise le array
+    // Array de l'image finale
     int ** array;
     // Alloue de la mémoire
-    array = AllocateMemory2D(HEIGHT, WIDTH);
-    
-    // Remplie le array si l'allocation a réussi
-    if (array != nullptr) {
-        // Initialise les cases du array
-        Initialize2DArray(array, WIDTH, HEIGHT);
+    array = AllocateMemory(HEIGHT, WIDTH);
 
-        // Boucle sur les rangés
-        for (int i = 0; i < HEIGHT; i++) {
+    // Boucle sur les rangés
+    for (int i = 0; i < HEIGHT; i++) {
+        // Obtient la position réelle à partir du pixel
+        y = centre_y + (1.0 - ((2.0 * i)/HEIGHT)) * radius_y;
+        // Boucle sur les colonnes
+        for (int j = 0; j < WIDTH; j++) {
             // Obtient la position réelle à partir du pixel
-            y = centre_y + (1.0 - ((2.0 * i)/HEIGHT)) * range_y;
-            // Boucle sur les colonnes
-            for (int j = 0; j < WIDTH; j++) {
-                // Obtient la position réelle à partir du pixel
-                x = centre_x + (((2.0 * j)/WIDTH) - 1.0) * range_x;
-                // Colorie le pixel (i, j)
-                array[i][j] = Mandelbrot(x, y);
-            }
+            x = centre_x + (((2.0 * j)/WIDTH) - 1.0) * radius_x;
+            // Colorie le pixel (i, j)
+            array[i][j] = Mandelbrot(x, y);
         }
-
-        // Crée l'image
-        SaveArrayAsImage(array, WIDTH, HEIGHT, file_name);
     }
 
+    // Crée l'image
+    SaveArrayAsImage(array, WIDTH, HEIGHT, file_name);
+
+    // Libère la mémoire
+    for (int i = 0; i < HEIGHT; i++)
+        free(array[i]);
+    free(array);
     // FIN
     return 0;
 }
@@ -99,7 +97,7 @@ int Mandelbrot(double x, double y) {
     double im = 0.0;
     // Boucle
     int iter = 0;
-    while (iter < MAX_ITER) {
+    while (iter++ < MAX_ITER) {
         // Nouvelle valeur réelle/imaginaire
         re = z_re*z_re - z_im*z_im + c_re;
         im = 2*z_re*z_im + c_im;
@@ -108,35 +106,25 @@ int Mandelbrot(double x, double y) {
         // Met à jour le nombre 'Z'
         z_re = re;
         z_im = im;
-        // Augmente la variable itérative
-        iter++;
     }
     return 0;
 }
 
-// Fonction pour allouer de la mémoire pour un array 1D
-int * AllocateMemory1D(int length) {
-    int * arr = (int*) malloc(length * sizeof(int));
-    if (arr == nullptr) printf("//>    Allocation mémoire 1D échouée.\n");
-    return arr;
-}
-
 // Fonction pour allouer de la mémoire pour un array 2D
-int ** AllocateMemory2D(int size, int length) {
-    int ** arr = (int**) malloc(size * sizeof(int*));
-    if (arr != nullptr) {
-        for (int i = 0; i < size; i++) arr[i] = AllocateMemory1D(length);
-    }
-    else {
-        printf("\\>  Allocation mémoire 2D échouée.\n");
+int** AllocateMemory(int w, int h) {
+    int ** arr = (int**) malloc(w * sizeof(int*));
+    for (int i = 0; i < w; i++) {
+        arr[i] = (int*) malloc(h * sizeof(int));
+        for (int j = 0; j < h; j++)
+            arr[i][j] = 0;
     }
     return arr;
 }
 
-// Fonction pour initialiser un array 2D
-void Initialize2DArray(int ** arr, int width, int height) {
-    // Boucle pour remplir le array
-    for (int i = 0; i < height; i++) for (int j = 0; j < width; j++) arr[i][j] = (i*i+j*j)%NORMALIZATION_VALUE;
+void FunkyFunction(int ** array, int w, int h) {
+    for (unsigned int i = 0; i < w; i++) 
+        for (int j = 0; j < h; j++) 
+            array[i][j] = (i*i + j*j) % NORMALIZATION_VALUE;
 }
 
 // Fonction pour sauvegarder le array en image

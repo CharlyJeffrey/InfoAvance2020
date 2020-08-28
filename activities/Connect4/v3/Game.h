@@ -1,48 +1,55 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
-#include <math.h>
+
+#define NOMBRE_JOUEURS 2
+#define NOMBRE_CHAR_NOM 16
 
 using namespace std;
 
 // Enum des status possible d'un choix
 enum EChoiceStatus {
+    DEFAULT,
     OK,
     INVALID_CHOICE,
     INVALID_COLUMN_RANGE,
-    INVALID_COLUMN_FULL,
-    DEFAULT
+    INVALID_COLUMN_FULL
 };
 
 // Class "Game"
 class Game {
     public:
-        Game(int, int, string*);
-
-        bool IsColumnFull(int);
-        bool IsGameOver();
-        EChoiceStatus GetChoiceStatus(int);
+        Game(int, int);   // Constructeur
 
         void Reset();
+        void PlayGame();
         void PrintGrid();
-        void PlaceJeton(int);
-        void ChangeJoueur();
-        void CheckGrid(int);
-        void PrintGameStatus();
 
     private:
+        /* Attributs */
         int rows;       // Nombre de rangés
         int cols;       // Nombre de colonnes
+        int coups;      // Nombre de coup joué
+        int maxCoups;   // Nombre de coup maximum possible
         int ** grid;    // Grille de jeu
         int * colsCounter;   // Compteur de jetons de chaque colonne
-
-        bool gameOver;  // Game over
-        bool gameWon;   // Player won
-
-        bool quiJoue;       // Variable pour déterminer quel joueur joue
-        string * joueurs;   // Noms des joueurs
+        int scoreCoup[3] = {0, 0, 0};   // Score pour un coup joué
+        int score[2] = {0, 0};          // Score des joueurs
+             
+        bool gameOver;              // Game over
+        bool gameWon;               // Player won
+        bool quiJoue;               // Déterminer quel joueur joue
         
-        string symboles = "XO ";            // Symboles possibles
-        int valeurSymbole[3] = {2, 3, 0};   // Valeur associée à chaque symbole
-        int * valeurGagnante;
+        char ** joueurs;   // Array pour contenir le nom des joueurs
+        char symboles[3] = {'X', 'O', ' '}; // Symboles possibles
+
+        /* Méthodes */
+        EChoiceStatus GetChoiceStatus(int); // Obtient le statut associé au choix
+
+        bool IsColumnFull(int);         // Colonne pleine?
+
+        void ChangeJoueur();
+        void GetValidChoice(int*);
+        void PlaceJetonThenCheck(int);
+        void CheckGrid(int);
 };

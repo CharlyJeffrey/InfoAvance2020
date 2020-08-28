@@ -25,11 +25,10 @@ Deuxième itération du code:
 using namespace std;
 
 /* Fonctions pour allouer de la mémoire */
-int * AllocateMemory1D(int);
-int** AllocateMemory2D(int, int);
+int**  AllocateMemory2D(int, int);
 
 /* Fonction pour initialiser un array 2D */
-void Initialize2DArray(int**, int, int);
+void FunkyFunction(int**, int, int);
 
 /* Fonction pour sauvegarder un array en image */
 void SaveArrayAsImage(int**, int, int, string);
@@ -38,46 +37,40 @@ int main() {
     // Nom de l'image
     string file_name = "Images/image_2.ppm";
 
-    // Initialise le array
+    // Array de l'image finale
     int ** array;
     // Alloue de la mémoire
     array = AllocateMemory2D(HEIGHT, WIDTH);
     
-    // Remplie le array si l'allocation a réussi
-    if (array != nullptr) {
-        // Initialise les cases du array
-        Initialize2DArray(array, WIDTH, HEIGHT);
-        // Crée l'image
-        SaveArrayAsImage(array, WIDTH, HEIGHT, file_name);
-    }
+    // Modifie le array
+    FunkyFunction(array, HEIGHT, WIDTH);
+    
+    // Crée l'image
+    SaveArrayAsImage(array, WIDTH, HEIGHT, file_name);
 
+    // Libère la mémoire
+    for (int i = 0; i < HEIGHT; i++)
+        free(array[i]);
+    free(array);
     // FIN
     return 0;
 }
 
-// Fonction pour allouer de la mémoire pour un array 1D
-int * AllocateMemory1D(int length) {
-    int * arr = (int*) malloc(length * sizeof(int));
-    if (arr == nullptr) printf("//>    Allocation mémoire 1D échouée.\n");
-    return arr;
-}
-
 // Fonction pour allouer de la mémoire pour un array 2D
-int ** AllocateMemory2D(int size, int length) {
-    int ** arr = (int**) malloc(size * sizeof(int*));
-    if (arr != nullptr) {
-        for (int i = 0; i < size; i++) arr[i] = AllocateMemory1D(length);
-    }
-    else {
-        printf("\\>  Allocation mémoire 2D échouée.\n");
+int** AllocateMemory2D(int w, int h) {
+    int ** arr = (int**) malloc(w * sizeof(int*));
+    for (int i = 0; i < w; i++) {
+        arr[i] = (int*) malloc(h * sizeof(int));
+        for (int j = 0; j < h; j++)
+            arr[i][j] = 0;
     }
     return arr;
 }
 
-// Fonction pour initialiser un array 2D
-void Initialize2DArray(int ** arr, int width, int height) {
-    // Boucle pour remplir le array
-    for (int i = 0; i < height; i++) for (int j = 0; j < width; j++) arr[i][j] = (i*i+j*j)%NORMALIZATION_VALUE;
+void FunkyFunction(int ** array, int w, int h) {
+    for (unsigned int i = 0; i < w; i++) 
+        for (int j = 0; j < h; j++) 
+            array[i][j] = (i*i + j*j) % NORMALIZATION_VALUE;
 }
 
 // Fonction pour sauvegarder le array en image
